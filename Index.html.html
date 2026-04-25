@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; margin: 20px; background: #f4f7f6; }
+    .container { max-width: 1000px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+    th { background-color: #004a99; color: white; }
+    input { width: 90%; padding: 5px; border: 1px solid #ccc; }
+    .btn { padding: 10px 20px; cursor: pointer; border: none; border-radius: 4px; }
+    .save-btn { background: #28a745; color: white; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>🧩 Estimation Pro V1.0</h2>
+  <div id="project-header">
+    <input type="text" id="sepl_id" placeholder="SEPL ID (e.g., 2024-001)">
+    <input type="text" id="proj_name" placeholder="Project Name">
+  </div>
+
+  <table id="estTable">
+    <thead>
+      <tr>
+        <th>Item Code</th>
+        <th>Qty</th>
+        <th>Rate</th>
+        <th>Labour %</th>
+        <th>Total Cost</th>
+        <th>Final Price</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody">
+      </tbody>
+  </table>
+  
+  <br>
+  <button class="btn" onclick="addRow()">+ Add Item</button>
+  <button class="btn save-btn" onclick="submitData()">Submit Estimate</button>
+</div>
+
+<script>
+  function addRow() {
+    const tbody = document.getElementById('tableBody');
+    const row = tbody.insertRow();
+    row.innerHTML = `
+      <td><input type="text" class="i-code" onchange="fetchRate(this)"></td>
+      <td><input type="number" class="i-qty" value="1" oninput="runCalc(this)"></td>
+      <td><input type="number" class="i-rate" oninput="runCalc(this)"></td>
+      <td><input type="number" class="i-lab" value="10" oninput="runCalc(this)"></td>
+      <td class="i-total">0.00</td>
+      <td class="i-final">0.00</td>
+    `;
+  }
+
+  function runCalc(element) {
+    const row = element.parentElement.parentElement;
+    const qty = row.querySelector('.i-qty').value;
+    const rate = row.querySelector('.i-rate').value;
+    const lab = row.querySelector('.i-lab').value;
+
+    // We call the Backend logic for accuracy
+    google.script.run.withSuccessHandler(res => {
+      row.querySelector('.i-total').innerText = res.totalCost;
+      row.querySelector('.i-final').innerText = res.finalPrice;
+    }).calculateTotals(qty, rate, lab, 5, 15); // Default 5% overhead, 15% margin
+  }
+
+  function submitData() {
+    const seplId = document.getElementById('sepl_id').value;
+    // Map table rows to array and send to google.script.run.saveEstimate()
+    alert("Saving estimate for " + seplId);
+  }
+
+  // Initialize with one row
+  window.onload = addRow;
+</script>
+
+</body>
+</html>
