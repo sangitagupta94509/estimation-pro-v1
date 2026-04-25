@@ -48,3 +48,20 @@ function saveEstimate(seplId, itemsArray) {
   });
   return "Success";
 }
+function getRateByCode(itemCode) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName('Rate_Master');
+  const data = sheet.getDataRange().getValues();
+  
+  // Look for the code in the first column
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0] === itemCode) {
+      return {
+        description: data[i][2],
+        unit: data[i][3],
+        rate: data[i][5]
+      };
+    }
+  }
+  return null; // If not found
+}
