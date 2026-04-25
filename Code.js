@@ -65,3 +65,20 @@ function getRateByCode(itemCode) {
   }
   return null; // If not found
 }
+function getUserRole() {
+  const email = Session.getActiveUser().getEmail();
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName('Users');
+  const data = sheet.getDataRange().getValues();
+  
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0] === email && data[i][3] === true) {
+      return {
+        email: email,
+        role: data[i][1], // Director, Manager, or User
+        name: data[i][2]
+      };
+    }
+  }
+  return { role: "Guest" }; // If not in the list
+}
