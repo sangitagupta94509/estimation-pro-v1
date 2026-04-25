@@ -2,61 +2,81 @@
 <html>
 <head>
   <style>
-    :root { --primary: #004a99; --success: #28a745; --warning: #ffc107; }
-    body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-    .login-card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 350px; }
-    .logo { font-size: 24px; font-weight: bold; color: var(--primary); margin-bottom: 10px; }
-    .user-info { margin-bottom: 20px; color: #666; font-size: 14px; }
-    .btn { display: block; width: 100%; padding: 12px; margin: 10px 0; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.3s; text-decoration: none; }
-    .btn-maker { background: var(--primary); color: white; }
-    .btn-reviewer { background: var(--warning); color: #333; }
-    .btn-admin { background: #333; color: white; }
+    :root { --primary: #004a99; --dir: #333; --mgr: #ffc107; --usr: #28a745; }
+    body { font-family: 'Segoe UI', sans-serif; background: #e9ecef; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+    .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 8px 20px rgba(0,0,0,0.15); text-align: center; width: 350px; transition: 0.3s; }
+    .logo { font-size: 26px; font-weight: bold; margin-bottom: 20px; color: var(--primary); }
+    .btn { display: block; width: 100%; padding: 15px; margin: 10px 0; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600; color: white; transition: 0.2s; }
+    
+    /* Role Colors */
+    .btn-dir { background: var(--dir); }
+    .btn-mgr { background: var(--mgr); color: #333; }
+    .btn-usr { background: var(--usr); }
+    .btn-login { background: var(--primary); margin-top: 20px; }
+    
     .hidden { display: none; }
+    input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+    .forgot { font-size: 12px; color: #666; cursor: pointer; text-decoration: underline; }
   </style>
 </head>
 <body>
 
-<div class="login-card">
-  <div class="logo">🧩 Estimation Pro</div>
-  <p id="welcomeMsg">Checking credentials...</p>
-  <div id="userEmail" class="user-info"></div>
-
-  <div id="menuOptions">
-    <button id="btnUser" class="btn btn-maker hidden" onclick="location.href='#'">Start New Estimate</button>
-    <button id="btnManager" class="btn btn-reviewer hidden" onclick="location.href='#'">Review Pending Jobs</button>
-    <button id="btnDirector" class="btn btn-admin hidden" onclick="location.href='#'">Director Dashboard</button>
+  <div id="step1" class="card">
+    <div class="logo">Estimation Pro</div>
+    <p>Select your position to continue:</p>
+    <button class="btn btn-dir" onclick="chooseRole('Director')">Director</button>
+    <button class="btn btn-mgr" onclick="chooseRole('Manager')">Manager</button>
+    <button class="btn btn-usr" onclick="chooseRole('User')">User</button>
   </div>
-  
-  <button class="btn" style="background:#ddd" onclick="google.script.host.close()">Exit System</button>
-</div>
+
+  <div id="step2" class="card hidden">
+    <div id="selectedRoleHeader" style="font-weight:bold; margin-bottom:10px;"></div>
+    <input type="email" id="emailInput" placeholder="Email ID">
+    <input type="password" id="passInput" placeholder="Password (12345)">
+    <button class="btn btn-login" onclick="verifyLogin()">Login</button>
+    <p class="forgot" onclick="alert('Contact System Admin to reset password.')">Forgot Password?</p>
+    <button class="btn" style="background:#ccc; color:black; padding:8px;" onclick="goBack()">Back</button>
+  </div>
+
+  <div id="step3" class="card hidden" style="width: 80%; max-width:600px;">
+    <h2 id="welcomeMsg"></h2>
+    <p>You have successfully logged into the system.</p>
+    <button class="btn btn-login" onclick="location.reload()">Logout</button>
+  </div>
 
 <script>
-  // When the page loads, ask Google who this user is
-  window.onload = function() {
-    google.script.run.withSuccessHandler(showMenu).getUserRole();
-  };
+  let selectedRole = "";
 
-  function showMenu(user) {
-    if (user.role === "Guest") {
-      document.getElementById('welcomeMsg').innerHTML = "⚠️ Access Denied. Contact Admin.";
-      return;
-    }
+  function chooseRole(role) {
+    selectedRole = role;
+    document.getElementById('step1').classList.add('hidden');
+    document.getElementById('step2').classList.remove('hidden');
+    document.getElementById('selectedRoleHeader').innerText = "Logging in as: " + role;
+  }
 
-    document.getElementById('welcomeMsg').innerHTML = "Welcome back, <b>" + user.name + "</b>";
-    document.getElementById('userEmail').innerText = user.email + " (" + user.role + ")";
+  function goBack() {
+    document.getElementById('step2').classList.add('hidden');
+    document.getElementById('step1').classList.remove('hidden');
+  }
 
-    // Logic to show buttons based on role
-    if (user.role === "User" || user.role === "Director") {
-      document.getElementById('btnUser').classList.remove('hidden');
-    }
-    if (user.role === "Manager" || user.role === "Director") {
-      document.getElementById('btnManager').classList.remove('hidden');
-    }
-    if (user.role === "Director") {
-      document.getElementById('btnDirector').classList.remove('hidden');
-    }
+  function verifyLogin() {
+    const email = document.getElementById('emailInput').value;
+    const pass = document.getElementById('passInput').value;
+
+    if (!email) { alert("Please enter Email"); return; }
+    if (pass !== "12345") { alert("Incorrect Password!"); return; }
+
+    // Check if this email exists in our Google Sheet with the right role
+    google.script.run.withSuccessHandler(function(response) {
+      if (response.success) {
+        document.getElementById('step2').classList.add('hidden');
+        document.getElementById('step3').classList.remove('hidden');
+        document.getElementById('welcomeMsg').innerText = "Welcome, " + response.name;
+      } else {
+        alert("Access Denied: Email not found for " + selectedRole + " position.");
+      }
+    }).checkUserAccess(email, selectedRole);
   }
 </script>
-
 </body>
 </html>

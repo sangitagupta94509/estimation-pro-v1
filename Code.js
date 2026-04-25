@@ -82,3 +82,19 @@ function getUserRole() {
   }
   return { role: "Guest" }; // If not in the list
 }
+function checkUserAccess(email, role) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName('Users');
+  const data = sheet.getDataRange().getValues();
+  
+  for (let i = 1; i < data.length; i++) {
+    // Check if Email matches AND Role matches
+    if (data[i][0].toLowerCase() === email.toLowerCase() && data[i][1] === role) {
+      return {
+        success: true,
+        name: data[i][2]
+      };
+    }
+  }
+  return { success: false };
+}
